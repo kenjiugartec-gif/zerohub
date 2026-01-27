@@ -1,7 +1,7 @@
 
-import React from 'react';
-import { Movement, TransportInfo, Container } from '../types';
-import { ArrowUpRight, ArrowDownLeft, Clock, Truck, RefreshCw, AlertCircle, Package } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Movement, TransportInfo } from '../types';
+import { ArrowUpRight, ArrowDownLeft, Clock, Truck, RefreshCw, AlertCircle, Package, Loader2 } from 'lucide-react';
 
 interface MovementLogProps {
   movements: Movement[];
@@ -9,12 +9,60 @@ interface MovementLogProps {
   type?: 'Gate-In' | 'Gate-Out' | 'Correction' | 'Relocation';
 }
 
-const MovementLog: React.FC<MovementLogProps> = ({ movements, limit, type }) => {
-  let displayMovements = movements;
-  if (type) displayMovements = displayMovements.filter(m => m.type === type);
-  if (limit) displayMovements = displayMovements.slice(0, limit);
+const ITEMS_PER_BATCH = 50;
 
-  if (displayMovements.length === 0) {
+const MovementLog: React.FC<MovementLogProps> = ({ movements, limit, type }) => {
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_BATCH);
+  const observerTarget = useRef<HTMLTableRowElement>(null);
+
+  // Filtrar movimientos (Memorizado para rendimiento)
+  const filteredMovements = useMemo(() => {
+    let result = movements;
+    if (type) {
+      result = result.filter(m => m.type === type);
+    }
+    return result;
+  }, [movements, type]);
+
+  // Resetear el contador si cambian los filtros o los datos base
+  useEffect(() => {
+    setVisibleCount(ITEMS_PER_BATCH);
+  }, [movements, type]);
+
+  // Intersection Observer para carga infinita
+  useEffect(() => {
+    // Si hay un límite fijo (ej. Dashboard), no observamos
+    if (limit) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + ITEMS_PER_BATCH, filteredMovements.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [filteredMovements.length, limit]);
+
+  // Determinar qué mostrar
+  const displayMovements = useMemo(() => {
+    if (limit) return filteredMovements.slice(0, limit);
+    return filteredMovements.slice(0, visibleCount);
+  }, [filteredMovements, limit, visibleCount]);
+
+  const hasMore = !limit && visibleCount < filteredMovements.length;
+
+  if (filteredMovements.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-slate-400">
         <Clock size={40} className="mb-4 opacity-20" />
@@ -46,9 +94,9 @@ const MovementLog: React.FC<MovementLogProps> = ({ movements, limit, type }) => 
   };
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto relative">
       <table className="w-full text-left border-collapse">
-        <thead className="bg-slate-50/50">
+        <thead className="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
           <tr>
             <th className="px-4 py-3 text-xs font-bold text-slate-400 uppercase">Movimiento</th>
             <th className="px-4 py-3 text-xs font-bold text-slate-400 uppercase">Unidad</th>
@@ -118,6 +166,18 @@ const MovementLog: React.FC<MovementLogProps> = ({ movements, limit, type }) => 
               </tr>
             );
           })}
+          
+          {/* Elemento centinela para lazy loading */}
+          {hasMore && (
+            <tr ref={observerTarget} className="bg-slate-50/30">
+              <td colSpan={limit ? 4 : 5} className="py-6 text-center">
+                 <div className="flex items-center justify-center gap-2 text-slate-400">
+                    <Loader2 className="animate-spin" size={16} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Cargando registros antiguos...</span>
+                 </div>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
