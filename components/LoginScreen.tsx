@@ -89,7 +89,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 <input 
                   type="text" 
                   className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-md font-normal text-slate-800 text-sm outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                  placeholder="Admin"
+                  placeholder=""
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -109,7 +109,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 <input 
                   type={showPassword ? "text" : "password"} 
                   className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-md font-normal text-slate-800 text-sm outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                  placeholder="•••••"
+                  placeholder=""
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
