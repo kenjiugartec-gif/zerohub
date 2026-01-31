@@ -12,32 +12,54 @@
         body { font-family: 'Inter', sans-serif; }
         .font-roboto { font-family: 'Roboto', sans-serif; }
         
-        /* Animación 3D para listados desplegables */
-        .dropdown-3d {
+        /* Efecto de Despliegue 3D Superior */
+        .dropdown-3d-pro {
             transform-origin: top;
-            transform: perspective(1000px) rotateX(-15deg);
+            transform: perspective(1200px) rotateX(-25deg) scale(0.95);
             opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             pointer-events: none;
         }
-        .dropdown-active {
-            transform: perspective(1000px) rotateX(0deg);
+        .dropdown-3d-pro.active {
+            transform: perspective(1200px) rotateX(0deg) scale(1);
             opacity: 1;
             pointer-events: auto;
         }
-        
-        /* Ocultar scrollbar en dropdowns */
+
+        /* Elevación de Unidades en Mapa */
+        .unit-card-3d {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .unit-card-3d:hover {
+            transform: translateY(-4px) perspective(1000px) rotateX(4deg);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animación Secuencial de Items */
+        @keyframes slideIn3D {
+            from {
+                opacity: 0;
+                transform: translateX(-20px) rotateY(-20deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) rotateY(0);
+            }
+        }
+        .stagger-item {
+            animation: slideIn3D 0.4s ease forwards;
+        }
+
+        /* Ocultar scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Quitar reguladores de cantidad (spinners) en inputs numéricos */
-        /* Chrome, Safari, Edge, Opera */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
           -webkit-appearance: none;
           margin: 0;
         }
-        /* Firefox */
         input[type=number] {
           -moz-appearance: textfield;
         }

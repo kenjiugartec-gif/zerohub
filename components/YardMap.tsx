@@ -143,7 +143,7 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
   const jumpToContainer = (container: Container) => {
     setActiveBlock(container.location.block);
     setActiveBay(container.location.bay);
-    // No limpiamos el searchQuery para mantener el resaltado
+    setSearchQuery(''); // Cerramos el buscador al seleccionar
   };
 
   return (
@@ -216,7 +216,7 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                   <button
                     key={b}
                     onClick={() => setActiveBay(b)}
-                    className={`relative group px-5 py-3 rounded-md transition-all duration-300 overflow-hidden min-w-[100px] border ${isActive ? 'bg-white border-slate-200 shadow-md' : 'bg-transparent border-transparent hover:border-slate-200 text-slate-500'}`}
+                    className={`relative group px-5 py-3 rounded-md transition-all duration-300 overflow-hidden min-w-[100px] border ${isActive ? 'bg-white border-slate-200 shadow-md translate-y-[-2px]' : 'bg-transparent border-transparent hover:border-slate-200 text-slate-500'}`}
                   >
                     <div className={`absolute bottom-0 left-0 h-1 transition-all duration-500 ${isActive ? 'bg-indigo-600' : 'bg-slate-300'}`} style={{ width: `${occupancyPct}%` }}></div>
                     <div className="relative z-10 flex flex-col items-center">
@@ -233,15 +233,15 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 relative">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-              <Search size={12} /> Filtro de Unidades (ID / Cliente)
+              <Search size={12} /> Búsqueda Profesional de Unidades
             </label>
             <div className="relative w-full group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={16} />
               <input 
                 type="text"
-                placeholder="BUSCAR O FILTRAR EN MAPA..."
+                placeholder="ESCRIBA SIGLA O NOMBRE DEL CLIENTE..."
                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold uppercase focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 focus:bg-white outline-none transition-all shadow-inner"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -249,51 +249,58 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 transition-colors p-1"
                 >
                   <X size={16} />
                 </button>
               )}
             </div>
             
-            {searchResults.length > 0 && searchQuery.length >= 2 && (
-              <div className="bg-white border border-slate-200 rounded-lg shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-300 max-h-64 overflow-y-auto no-scrollbar border-t-4 border-t-indigo-600 relative z-[60]">
-                <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Coincidencias Globales: {searchResults.length}</span>
+            {/* LISTADO DE RESULTADOS 3D MEJORADO */}
+            <div className={`absolute top-full left-0 right-0 mt-2 z-[100] dropdown-3d-pro ${searchResults.length > 0 && searchQuery.length >= 2 ? 'active' : ''}`}>
+              <div className="bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden border-t-4 border-t-indigo-600 max-h-80 overflow-y-auto no-scrollbar">
+                <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md bg-white/90">
+                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Coincidencias en Inventario: {searchResults.length}</span>
+                   <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
+                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse [animation-delay:0.2s]"></div>
+                      <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse [animation-delay:0.4s]"></div>
+                   </div>
                 </div>
                 <div className="divide-y divide-slate-50">
-                  {searchResults.slice(0, 10).map(c => (
+                  {searchResults.map((c, index) => (
                     <button 
                       key={c.id} 
                       onClick={() => jumpToContainer(c)}
-                      className="w-full flex items-center justify-between p-4 hover:bg-indigo-50 transition-colors group"
+                      style={{ animationDelay: `${index * 40}ms` }}
+                      className="stagger-item w-full flex items-center justify-between p-4 hover:bg-indigo-50 transition-all group border-l-4 border-l-transparent hover:border-l-indigo-600"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="p-2 bg-slate-100 rounded-md text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                          <Package size={16} />
+                        <div className="p-2.5 bg-slate-100 rounded-lg text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all transform group-hover:scale-110 shadow-sm">
+                          <Package size={18} />
                         </div>
                         <div className="text-left">
-                          <p className="text-sm font-black text-slate-900 uppercase font-mono">{c.id}</p>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">{c.client}</p>
+                          <p className="text-sm font-black text-slate-900 uppercase font-mono tracking-tighter group-hover:text-indigo-600">{c.id}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight line-clamp-1">{c.client}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">Posición</p>
-                          <p className="text-[8px] font-bold text-slate-500 uppercase">{c.location.block}-{c.location.bay}-{c.location.row}-{c.location.tier}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right hidden sm:block">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ubicación Actual</p>
+                          <div className="flex items-center gap-1 justify-end">
+                            <MapPin size={10} className="text-indigo-500" />
+                            <p className="text-[10px] font-black text-slate-700 font-mono uppercase">{c.location.block}-{c.location.bay}-{c.location.row}</p>
+                          </div>
                         </div>
-                        <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                        <div className="p-2 bg-slate-50 rounded-full group-hover:bg-indigo-100 transition-colors">
+                           <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                        </div>
                       </div>
                     </button>
                   ))}
-                  {searchResults.length > 10 && (
-                     <div className="p-3 text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50">
-                        ... y {searchResults.length - 10} más
-                     </div>
-                  )}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -301,11 +308,11 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
         <div className="flex items-center gap-6 mb-4 px-2">
            <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-slate-800"></div>
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Zona FCL (Varios Bloques)</span>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Zona FCL (Full)</span>
            </div>
            <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-purple-600 shadow-[0_0_8px_rgba(147,51,234,0.4)]"></div>
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Zona LCL (Bloque {lclBlock})</span>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Zona LCL (Suelto)</span>
            </div>
         </div>
 
@@ -355,26 +362,26 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                             disabled={relocatingId && container !== undefined}
                             onClick={() => container ? handleContainerClick(container) : handleEmptyEspacioClick(espacio)}
                             className={`
-                              relative w-28 h-20 rounded-sm flex flex-col items-center justify-center border transition-all duration-300
+                              relative w-28 h-20 rounded-sm flex flex-col items-center justify-center border transition-all duration-300 unit-card-3d
                               ${container 
                                 ? (isMatch 
-                                  ? 'bg-indigo-600 border-indigo-700 shadow-2xl ring-4 ring-indigo-500/20 text-white z-20 scale-105' 
+                                  ? 'bg-indigo-600 border-indigo-700 shadow-[0_20px_40px_rgba(79,70,229,0.4)] ring-4 ring-indigo-500/30 text-white z-20 scale-105' 
                                   : (isFilteredOut 
-                                      ? 'bg-slate-100 border-slate-200 text-slate-300 opacity-40 grayscale scale-95' 
+                                      ? 'bg-slate-100 border-slate-200 text-slate-300 opacity-30 grayscale scale-95 pointer-events-none' 
                                       : (container.loadType === 'LCL' 
                                           ? 'bg-purple-700 border-purple-800 text-white hover:bg-purple-600 shadow-md' 
                                           : 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-white shadow-md'))) 
                                 : (isSuggested 
                                     ? `bg-white border-dashed ${isLclZone ? 'border-purple-400 ring-4 ring-purple-500/10' : 'border-indigo-400 ring-4 ring-indigo-500/10'} hover:bg-indigo-50/50 shadow-inner` 
                                     : (isDimmed 
-                                        ? 'bg-slate-50 border-slate-100 opacity-20 scale-95 grayscale' 
+                                        ? 'bg-slate-50 border-slate-100 opacity-10 scale-95 grayscale' 
                                         : 'bg-white border-dashed border-slate-200 hover:border-slate-400 hover:bg-slate-50'))}
-                              ${relocatingId && isSuggested ? 'ring-2 ring-indigo-500 ring-offset-2 animate-pulse scale-105' : ''}
+                              ${relocatingId && isSuggested ? 'ring-2 ring-indigo-500 ring-offset-2 animate-pulse scale-105 shadow-xl' : ''}
                             `}
                           >
                             {container ? (
                               <>
-                                <div className="absolute top-1 right-1 opacity-20">
+                                <div className="absolute top-1 right-1 opacity-20 group-hover:opacity-100 transition-opacity">
                                   {isMatch ? <Focus size={10} className="text-white" /> : <Package size={10} />}
                                 </div>
                                 <span className={`text-[10px] font-mono font-black uppercase tracking-tight truncate w-full px-2 text-center`}>
@@ -406,43 +413,43 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
         <div className="mt-8 flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
            <div className="flex items-center gap-3">
               <Info size={16} className="text-indigo-500" />
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Los bloques se auto-asignan según flujo: Bloques A-B (FCL) | Bloque {lclBlock} (LCL)</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Optimización de Estiba: FCL (Bloques A-B) | LCL (Bloque {lclBlock})</p>
            </div>
            <div className="flex gap-4">
               <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-slate-800"></div>
-                 <span className="text-[8px] font-black text-slate-400 uppercase">FCL</span>
+                 <div className="w-2.5 h-2.5 rounded-sm bg-slate-800"></div>
+                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-tight">Zona FCL</span>
               </div>
               <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-purple-600"></div>
-                 <span className="text-[8px] font-black text-slate-400 uppercase">LCL</span>
+                 <div className="w-2.5 h-2.5 rounded-sm bg-purple-600 shadow-[0_0_5px_rgba(147,51,234,0.3)]"></div>
+                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-tight">Zona LCL</span>
               </div>
            </div>
         </div>
       </div>
 
       {showModal && editData && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-[#1e293b] rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-700/50">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#1e293b] rounded-2xl w-full max-w-2xl shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-700/50">
             <div className="p-10 space-y-8">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-5">
-                   <div className={`p-4 rounded-md text-white shadow-xl ${showModal.loadType === 'LCL' ? 'bg-purple-600 shadow-purple-500/20' : 'bg-slate-700 shadow-slate-900/40'}`}>
+                   <div className={`p-4 rounded-xl text-white shadow-xl ${showModal.loadType === 'LCL' ? 'bg-purple-600 shadow-purple-500/20' : 'bg-indigo-600 shadow-indigo-900/40'}`}>
                       <Package size={28} />
                    </div>
                    <div>
                       <h4 className="text-2xl font-black text-white uppercase tracking-tight font-mono">{showModal.id}</h4>
                       <div className="flex items-center gap-3 mt-1">
-                        <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${showModal.loadType === 'LCL' ? 'text-purple-400' : 'text-indigo-400'}`}>{showModal.loadType === 'LCL' ? 'CARGA LCL' : showModal.shippingLine}</p>
+                        <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${showModal.loadType === 'LCL' ? 'text-purple-400' : 'text-indigo-400'}`}>{showModal.loadType === 'LCL' ? 'UNIDAD CONSOLIDADA LCL' : showModal.shippingLine}</p>
                         <span className="flex items-center gap-2 px-2.5 py-1 rounded-sm text-[9px] font-black uppercase tracking-widest bg-slate-700/50 text-white border border-white/5">
                           {showModal.loadType === 'LCL' ? <Layers size={10} /> : getTypeIcon(showModal.type)}
-                          {showModal.loadType === 'LCL' ? 'SUELTA' : showModal.type}
+                          {showModal.loadType === 'LCL' ? 'CARGA SUELTA' : showModal.type}
                         </span>
                       </div>
                    </div>
                 </div>
                 {!isEditing && (
-                  <button onClick={() => setShowModal(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-md text-slate-400 hover:text-white transition-all">
+                  <button onClick={() => setShowModal(null)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-all shadow-inner">
                     <X size={20} />
                   </button>
                 )}
@@ -450,24 +457,24 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
 
               <div className="grid grid-cols-3 gap-4">
                  <DarkDetail label="Bloque" value={showModal.location.block} />
-                 <DarkDetail label="Posición" value={`${showModal.location.bay}-${showModal.location.row}-${showModal.location.tier}`} />
+                 <DarkDetail label="Coordenadas" value={`${showModal.location.bay}-${showModal.location.row}-${showModal.location.tier}`} />
                  
                  <EditableDarkDetail 
-                  label="N° Guía Recepción" 
+                  label="Guía Recepción" 
                   value={editData.receptionNote} 
                   isEditing={isEditing}
                   onChange={(v) => setEditData({...editData, receptionNote: v.toUpperCase()})}
                  />
 
                  <EditableDarkDetail 
-                  label="N° EIR" 
+                  label="EIR Comprobante" 
                   value={editData.eirNumber || ''} 
                   isEditing={isEditing}
                   onChange={(v) => setEditData({...editData, eirNumber: v.toUpperCase()})}
                  />
                  
                  <EditableDarkDetail 
-                  label="Cliente" 
+                  label="Cliente / Consignatario" 
                   value={editData.client} 
                   isEditing={isEditing}
                   autoCapitalize
@@ -476,17 +483,17 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                  
                  {showModal.loadType === 'FCL' ? (
                    <>
-                    <DarkDetail label="Tipo/Size" value={`${showModal.size} ${showModal.type}`} />
+                    <DarkDetail label="Configuración" value={`${showModal.size} ${showModal.type}`} />
                     <EditableDarkDetail 
-                      label="BL" 
+                      label="N° BL" 
                       value={editData.bl} 
                       isEditing={isEditing}
                       onChange={(v) => setEditData({...editData, bl: v.toUpperCase()})}
                     />
-                    <DarkDetail label="Nave/Viaje" value={`${showModal.vessel} / ${showModal.voyage}`} />
+                    <DarkDetail label="Nave / Buque" value={showModal.vessel} />
                     
                     <EditableDarkDetail 
-                      label="Tara (KG)" 
+                      label="Tara Nominal (KG)" 
                       value={editData.tare?.toString()} 
                       isEditing={isEditing}
                       type="number"
@@ -494,7 +501,7 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                     />
                     
                     <EditableDarkDetail 
-                      label="P. Bruto (KG)" 
+                      label="Peso Bruto (KG)" 
                       value={editData.weight?.toString()} 
                       isEditing={isEditing}
                       type="number"
@@ -509,14 +516,14 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                       isEditing={isEditing} 
                     />
                     <EditableDarkDetail 
-                      label="Bultos" 
+                      label="Total Bultos" 
                       value={editData.cargoQuantity?.toString() || '0'} 
                       isEditing={isEditing}
                       type="number"
                       onChange={(v) => setEditData({...editData, cargoQuantity: parseInt(v) || 0})}
                     />
                     <EditableDarkDetail 
-                      label="Peso Carga (KG)" 
+                      label="Peso Neto Carga" 
                       value={editData.cargoWeight?.toString() || '0'} 
                       isEditing={isEditing}
                       type="number"
@@ -526,7 +533,7 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                  )}
                  
                  <EditableDarkDetail 
-                  label="Fecha/Hora Ingreso" 
+                  label="Timestamp Registro" 
                   value={editData.entryDate} 
                   isEditing={isEditing}
                   type="datetime-local"
@@ -534,7 +541,7 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                  />
                  
                  <EditableDarkDetail 
-                  label="Patente Camión" 
+                  label="Chasis Camión" 
                   value={editData.transport.truckPlate} 
                   isEditing={isEditing}
                   onChange={(v) => setEditData({...editData, transport: { ...editData.transport, truckPlate: v.toUpperCase() }})}
@@ -546,20 +553,20 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                    <>
                     <button 
                       onClick={handleSaveChanges}
-                      className="py-4 bg-green-600 text-white rounded-md font-black text-[10px] uppercase hover:bg-green-500 transition-all flex items-center justify-center gap-2"
+                      className="py-4 bg-green-600 text-white rounded-xl font-black text-[10px] uppercase hover:bg-green-500 transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-900/20"
                     >
                       <Save size={14} />
-                      Guardar
+                      Aplicar Cambios
                     </button>
                     <button 
                       onClick={() => {
                         setIsEditing(false);
                         setEditData({ ...showModal });
                       }}
-                      className="py-4 bg-slate-700 text-white rounded-md font-black text-[10px] uppercase hover:bg-slate-600 transition-all flex items-center justify-center gap-2"
+                      className="py-4 bg-slate-700 text-white rounded-xl font-black text-[10px] uppercase hover:bg-slate-600 transition-all flex items-center justify-center gap-2"
                     >
                       <Undo2 size={14} />
-                      Cancelar
+                      Descartar
                     </button>
                     <div></div>
                    </>
@@ -570,23 +577,23 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
                         onDeleteLocation(showModal.id);
                         setShowModal(null);
                       }}
-                      className="py-4 bg-red-600/10 text-red-400 rounded-md font-black text-[10px] uppercase border border-red-600/20 hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-900/10"
+                      className="py-4 bg-red-600/10 text-red-400 rounded-xl font-black text-[10px] uppercase border border-red-600/20 hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-900/10"
                     >
-                      Eliminar
+                      Eliminar Ficha
                     </button>
                     <button 
                       onClick={() => setIsEditing(true)}
-                      className="py-4 bg-amber-600/10 text-amber-400 rounded-md font-black text-[10px] uppercase border border-amber-600/20 hover:bg-amber-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                      className="py-4 bg-amber-600/10 text-amber-400 rounded-xl font-black text-[10px] uppercase border border-amber-600/20 hover:bg-amber-600 hover:text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-900/10"
                     >
                       <Edit3 size={14} />
-                      Editar
+                      Modificar
                     </button>
                     <button 
                       onClick={() => {
                         setRelocatingId(showModal.id);
                         setShowModal(null);
                       }}
-                      className="py-4 bg-indigo-600/10 text-indigo-400 rounded-md font-black text-[10px] uppercase border border-indigo-600/20 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                      className="py-4 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-900/40"
                     >
                       <RefreshCw size={14} />
                       Re-Ubicar
@@ -605,7 +612,7 @@ const YardMap: React.FC<YardMapProps> = ({ espacios, containers, yardConfig, onE
 // --- COMPONENTES AUXILIARES ---
 
 const DarkDetail = ({ label, value }: { label: string, value: string }) => (
-  <div className="bg-slate-800/50 p-4 rounded-md border border-slate-700/50 shadow-inner">
+  <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 shadow-inner group hover:bg-slate-800 transition-colors">
     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
     <p className="text-sm font-bold text-white uppercase font-mono truncate">{value || 'N/A'}</p>
   </div>
@@ -634,7 +641,7 @@ const EditableDarkDetail = ({ label, value, isEditing, onChange, type = "text", 
   };
 
   return (
-    <div className={`p-4 rounded-md border transition-all ${isEditing ? 'bg-slate-700 border-indigo-500 ring-1 ring-indigo-500/30' : 'bg-slate-800/50 border-slate-700/50'}`}>
+    <div className={`p-4 rounded-xl border transition-all ${isEditing ? 'bg-slate-700 border-indigo-500 ring-4 ring-indigo-500/10' : 'bg-slate-800/50 border-slate-700/50'}`}>
       <div className="flex justify-between items-center mb-1.5">
         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
         {isEditing && type === 'datetime-local' && (
@@ -648,7 +655,7 @@ const EditableDarkDetail = ({ label, value, isEditing, onChange, type = "text", 
           ref={inputRef}
           type={type}
           step={type === 'datetime-local' ? "1" : undefined}
-          className="w-full bg-transparent text-sm font-bold text-white uppercase font-mono outline-none border-b border-white/10 pb-0.5 focus:border-indigo-400 transition-colors"
+          className="w-full bg-transparent text-sm font-bold text-white uppercase font-mono outline-none border-b border-white/10 pb-1 focus:border-indigo-400 transition-colors"
           value={displayValue || ''}
           onChange={(e) => handleChange(e.target.value)}
         />
@@ -663,13 +670,13 @@ const EditableDarkDetail = ({ label, value, isEditing, onChange, type = "text", 
 
 const MaterialSelect = ({ value, onChange, isEditing }: { value?: MaterialType, onChange: (v: MaterialType) => void, isEditing: boolean }) => {
   if (!isEditing) {
-    return <DarkDetail label="Tipo de Material" value={value || 'No Especificado'} />;
+    return <DarkDetail label="Tipo de Mercancía" value={value || 'No Definido'} />;
   }
   return (
-    <div className="p-4 rounded-md border bg-slate-700 border-indigo-500 ring-1 ring-indigo-500/30">
-      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tipo de Material</p>
+    <div className="p-4 rounded-xl border bg-slate-700 border-indigo-500 ring-4 ring-indigo-500/10">
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tipo de Mercancía</p>
       <select 
-        className="w-full bg-transparent text-sm font-bold text-white uppercase font-mono outline-none cursor-pointer"
+        className="w-full bg-transparent text-sm font-bold text-white uppercase font-mono outline-none cursor-pointer appearance-none"
         value={value}
         onChange={(e) => onChange(e.target.value as MaterialType)}
       >
